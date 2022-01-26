@@ -5,25 +5,21 @@
  *   
  */
 
+import rebuildDOM from './importedFunctions/rebuildDOM.js';
 import uniqueIdGenerator from './importedFunctions/uniqueIdGenerator.js';
-
-//TEMP pre-database array
-const objectivesInDOM = [];
 
 const objectivesArray = ( () => {
     const array = [];  //array of objects with object and element properties
  
-    const addNew = ( name, parentId ) => {
-        array.push ( {  object: newObjective (name, parentId), 
-                        pageElement: null,
-        } );
+    const addNew = ( name, parentId, id ) => {
+        array.push ( newObjective (name, parentId, id));
     };
 
-    const _getArrayIndexById = (targetId) => array.findIndex(arrayVal => arrayVal.object.getId() === targetId);
+    const _getArrayIndexById = (targetId) => array.findIndex(arrayVal => arrayVal.getId() === targetId);
 
-    const getObjectById = (targetId) => array[ _getArrayIndexById(targetId) ].object;  //TEMP
+    const getObjectById = (targetId) => array[ _getArrayIndexById(targetId) ];  //TEMP
 
-    const getIdByIndex = (index) => array[index].object.getId();
+    const getIdByIndex = (index) => array[index].getId();
 
     const getDomElement = (objectiveId, displayMode, displayTier) => {
         let objectiveObject = getObjectById (objectiveId);
@@ -36,12 +32,10 @@ const objectivesArray = ( () => {
         return generateHtmlElement (objectiveObject, displayMode, displayTier, childrenDomElements);
     }
 
-    const getFullArray = () => array; //TEMP
-    const returnMasterID = () => array[0].object.getId(); //TEMP
+    const returnMasterID = () => array[0].getId(); //TEMP
 
     return {
         addNew,
-        getFullArray, //TEMP
         getIdByIndex, //TEMP
         getObjectById,
         getDomElement,
@@ -55,32 +49,63 @@ const displayModes = {
 }
 
 const generateHtmlElement = (objectiveObject, displayMode, objectiveTier, childrenDomElements) => {
-    const newDiv = document.createElement('div');
+    //variables
+    const objectiveId = objectiveObject.getId();
+    //parent div
+    const newObjectiveDiv = document.createElement('div');
+    newObjectiveDiv.id = objectiveId;
+    newObjectiveDiv.classList.add('objective', displayMode);
+    //name
     const nameDiv = document.createElement('div');
-    const childrenHolderDiv = document.createElement('div');
-
-    newDiv.classList.add('objective', displayMode);
     nameDiv.classList.add('name');
     nameDiv.innerHTML = objectiveObject.getName();
-    newDiv.appendChild(nameDiv);
-    childrenHolderDiv.classList.add('children');
+    //children container
+    const childrenContainerDiv = document.createElement('div');
+    childrenContainerDiv.classList.add('children');
+    //add new input
+    const addNewChildInput = document.createElement('input');
+    addNewChildInput.placeholder = 'New Task';
+    //add new button
+    const addNewChildButton = document.createElement('button');
+    addNewChildButton.innerHTML = 'Add';
+    addNewChildButton.classList.add('addNewChildObjective');
+    addNewChildButton.objectiveId = objectiveId;
+    addNewChildButton.objectiveTier = objectiveTier;
+    addNewChildButton.input = addNewChildInput;
+    addNewChildButton.addEventListener('click', addNewClicked);
+
+    //structure the div
+    newObjectiveDiv.appendChild(nameDiv);
     childrenDomElements.forEach(function(element){
-        childrenHolderDiv.appendChild(element);
+        childrenContainerDiv.appendChild(element);
     });
+    newObjectiveDiv.appendChild(childrenContainerDiv);
+    newObjectiveDiv.appendChild(addNewChildInput);
+    newObjectiveDiv.appendChild(addNewChildButton);
 
-    newDiv.appendChild(childrenHolderDiv);
-
-    return newDiv;
+    return newObjectiveDiv;
 }
 
-const newObjective = (name, parentId) => {
-    let uniqueID = uniqueIdGenerator(20);
+function addNewClicked (evt) {
+    const newTaskName = evt.currentTarget.input.value;
+    const parentId = evt.currentTarget.objectiveId;
+    const objectiveTier = evt.currentTarget.objectiveTier;
+    objectivesArray.addNew(newTaskName, parentId);
+
+    rebuildDOM(parentId, objectiveTier);
+}
+
+const newObjective = (name, parentId, uniqueID = uniqueIdGenerator(20) ) => {
+    // let uniqueID = ;
     let objectiveName,  //if name is blank, revised with setName, below
         childObjectiveArray = [],
         archivedSubobjectives = [],
         categoryArray = [],
         dueDate,
         childOf = parentId;
+
+        console.log(uniqueID);
+
 
     const getId = () => uniqueID;
 
@@ -115,6 +140,9 @@ const newObjective = (name, parentId) => {
         };
     }
     updateParentData (childOf);  //need to update the parent ID when first created
+
+    //update local storage
+    localStorage.objectivesArray = objectivesArray;
     
     return {    getId,
                 getName,
@@ -128,10 +156,4 @@ const newObjective = (name, parentId) => {
             }
 }
 
-const getObjectivebyId = (objectiveId) => {
-    for (let i = 0; i < objectivesInDOM.length; i++) {
-        if (objectivesInDOM[i].getId() == objectiveId) return objectivesInDOM[i];
-    }
-}
-
-export {newObjective, objectivesArray, getObjectivebyId}
+export default objectivesArray
