@@ -1,0 +1,31 @@
+body {
+    font-family: sans-serif;
+}
+
+.objective-group .column {
+    width: 200px;
+    border: 1px solid black;
+}
+
+.objective.board {
+    border: 1px solid black;
+    width: 800px;
+    margin: 0 auto;
+}
+
+.objective.board .name {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* .objective .column {
+
+}
+
+.objective .kanban {
+
+}
+
+.objective .checklist-item {
+
+} */
